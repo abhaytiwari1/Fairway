@@ -3,14 +3,15 @@ pipeline {
 
     environment {
         SF_USERNAME = 'abhay.b.tiwari.631b9ea19687@agentforce.com'
-        SF_CONSUMER_KEY = credentials('consumer_key')
-        SF_CLI = '"C:\\Program Files\\sf\\bin\\sf.cmd"'
+        SF_CONSUMER_KEY = credentials('consumer_key')   // Your connected app consumer key
+        SF_CLI = '"C:\\Program Files\\sf\\bin\\sf.cmd"' // Full path to Salesforce CLI
     }
 
     stages {
 
         stage('Authenticate Salesforce') {
             steps {
+                // Use Jenkins secret file for JWT key
                 withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
                     bat """
                     %SF_CLI% force:auth:jwt:grant ^
@@ -45,6 +46,18 @@ pipeline {
                 --result-format human
                 """
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished."
+        }
+        success {
+            echo "Deployment succeeded ✅"
+        }
+        failure {
+            echo "Deployment failed ❌"
         }
     }
 }
