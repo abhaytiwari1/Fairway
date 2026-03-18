@@ -10,7 +10,7 @@ pipeline {
  
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/Dharsaikat13/SFDC--DemoProject.git'
+                git 'https://github.com/abhaytiwari1/Fairway.git'
             }
         }
  
