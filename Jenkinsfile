@@ -1,60 +1,57 @@
 pipeline {
     agent any
-
+ 
     environment {
-        SF_USERNAME = credentials('user_name')
+        SF_USERNAME     = credentials('user_name')
         SF_CONSUMER_KEY = credentials('consumer_key')
+        SF_CLI          = 'C:/Program Files/sf/bin/sf.cmd'
     }
-
+ 
     stages {
-
+ 
         stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/abhaytiwari1/Fairway.git'
             }
         }
-
+ 
         stage('Authenticate Salesforce') {
             steps {
-                bat '''
-                sf force:auth:jwt:grant ^
-                --client-id %SF_CONSUMER_KEY% ^
-                --jwt-key-file server.key ^
-                --username %SF_USERNAME% ^
-                --instance-url https://login.salesforce.com ^
-                --set-default-dev-hub ^
-                --alias projectdemosfdc
-                '''
+                withCredentials([file(credentialsId: 'jwt_key', variable: 'JWT_KEY_FILE')]) {
+                    bat """
+                    "%SF_CLI%" org login jwt ^
+                    --client-id %SF_CONSUMER_KEY% ^
+                    --jwt-key-file "%JWT_KEY_FILE%" ^
+                    --username %SF_USERNAME% ^
+                    --instance-url https://login.salesforce.com ^
+                    --alias projectdemosfdc
+                    """
+                }
             }
         }
-
-        stage('Debug') {
-            steps {
-                bat 'dir'
-                bat 'dir force-app'
-            }
-        }
-
+ 
         stage('Deploy to Org') {
             steps {
-                bat '''
-                sf project deploy start ^
-                --source-dir force-app ^
+                bat """
+                "%SF_CLI%" deploy metadata ^
                 --target-org projectdemosfdc ^
                 --wait 10
-                '''
+                """
             }
         }
-
-        stage('Run Tests') {
-            steps {
-                bat '''
-                sf apex run test ^
-                --target-org projectdemosfdc ^
-                --wait 10 ^
-                --result-format human
-                '''
-            }
+ 
+ 
+ 
+    }
+ 
+    post {
+        success {
+            echo '✅ Salesforce deployment and tests completed successfully'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check logs above for details.'
         }
     }
 }
+ 
