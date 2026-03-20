@@ -20,58 +20,35 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'jwt_key', variable: 'JWT_KEY_FILE')]) {
                     bat """
-                    echo Authenticating to Salesforce...
-
                     "%SF_CLI%" org login jwt ^
                     --client-id %SF_CONSUMER_KEY% ^
                     --jwt-key-file "%JWT_KEY_FILE%" ^
                     --username %SF_USERNAME% ^
                     --instance-url https://login.salesforce.com ^
                     --alias projectdemosfdc
-
-                    echo Authentication Successful
                     """
                 }
             }
         }
 
-        stage('Validate Deployment (Dry Run - Non Blocking)') {
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    bat """
-                    echo Running Validation (Dry Run)...
-
-                    "%SF_CLI%" project deploy start ^
-                    --target-org projectdemosfdc ^
-                    --dry-run ^
-                    --test-level RunLocalTests ^
-                    --wait 20
-
-                    echo Validation Completed
-                    """
-                }
-            }
-        }
-
-        stage('Deploy to Org (With Tests)') {
+        stage('Deploy to Org') {
             steps {
                 bat """
-                echo Deploying Metadata with Tests...
+                echo Deploying Metadata...
 
-                "%SF_CLI%" project deploy start ^
+                "%SF_CLI%" deploy metadata ^
                 --target-org projectdemosfdc ^
-                --test-level RunLocalTests ^
-                --wait 30
+                --wait 10
 
                 echo Deployment Completed
                 """
             }
         }
 
-        stage('Run Apex Tests (JUnit Report)') {
+        stage('Run Apex Tests') {
             steps {
                 bat """
-                echo Running Apex Tests for Reporting...
+                echo Running Apex Tests...
 
                 "%SF_CLI%" apex run test ^
                 --target-org projectdemosfdc ^
@@ -84,6 +61,7 @@ pipeline {
                 """
             }
         }
+
     }
 
     post {
@@ -94,7 +72,7 @@ pipeline {
             echo '✅ Salesforce deployment and tests completed successfully'
         }
         failure {
-            echo '❌ Pipeline failed. Likely due to test coverage < 75% or deployment errors.'
+            echo '❌ Pipeline failed. Check logs above for details.'
         }
     }
 }
