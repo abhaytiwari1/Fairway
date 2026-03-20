@@ -24,7 +24,18 @@ private class HelloWorldTest {
 
     @isTest
     static void myUnitTest() {
-        system.debug('hello');
-        // TO DO: implement unit test
+
+        // Create test data
+        Account acc = new Account(Name = 'Test Account');
+        insert acc;
+
+        // Perform update to trigger logic (if any trigger exists)
+        acc.Name = 'Updated Account';
+        update acc;
+
+        // Query and validate
+        Account result = [SELECT Name FROM Account WHERE Id = :acc.Id];
+
+        System.assertEquals('Updated Account', result.Name);
     }
 }
