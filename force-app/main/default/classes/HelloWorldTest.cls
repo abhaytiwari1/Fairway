@@ -20,23 +20,19 @@
  * See the Apex Language Reference for more information about Testing and Code Coverage.
  */
 @isTest
-public class GenericTriggerTest {
+private class HelloWorldTest {
 
     @isTest
-    static void testAccountTriggerFlow() {
+    static void testAccountFlow() {
 
-        // Create test data
         Account acc = new Account(Name = 'Test Account');
         insert acc;
 
-        // Update to fire before/after update triggers
         acc.Name = 'Updated Account';
         update acc;
 
-        // Delete to fire delete triggers (if any)
         delete acc;
 
-        // Assertion (basic)
-        System.assert(true, 'Trigger executed successfully');
+        System.assert(true, 'Executed successfully');
     }
 }
