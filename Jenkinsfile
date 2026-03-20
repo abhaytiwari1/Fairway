@@ -35,14 +35,14 @@ pipeline {
             }
         }
 
-        stage('Validate Deployment (Check Only)') {
+        stage('Validate Deployment (Dry Run)') {
             steps {
                 bat """
-                echo Validating Deployment (Check Only)...
+                echo Validating Deployment (Dry Run)...
 
-                "%SF_CLI%" deploy metadata ^
+                "%SF_CLI%" project deploy start ^
                 --target-org projectdemosfdc ^
-                --check-only ^
+                --dry-run ^
                 --test-level RunLocalTests ^
                 --wait 20
 
@@ -56,7 +56,7 @@ pipeline {
                 bat """
                 echo Deploying Metadata to Salesforce...
 
-                "%SF_CLI%" deploy metadata ^
+                "%SF_CLI%" project deploy start ^
                 --target-org projectdemosfdc ^
                 --wait 20
 
@@ -85,7 +85,7 @@ pipeline {
 
     post {
         always {
-            junit 'test-results\\*.xml'
+            junit allowEmptyResults: true, testResults: 'test-results\\*.xml'
         }
         success {
             echo '✅ Salesforce deployment and tests completed successfully'
