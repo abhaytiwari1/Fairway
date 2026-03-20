@@ -35,40 +35,43 @@ pipeline {
             }
         }
 
-        stage('Validate Deployment (Dry Run)') {
+        stage('Validate Deployment (Dry Run - Non Blocking)') {
             steps {
-                bat """
-                echo Validating Deployment (Dry Run)...
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    bat """
+                    echo Running Validation (Dry Run)...
 
-                "%SF_CLI%" project deploy start ^
-                --target-org projectdemosfdc ^
-                --dry-run ^
-                --test-level RunLocalTests ^
-                --wait 20
+                    "%SF_CLI%" project deploy start ^
+                    --target-org projectdemosfdc ^
+                    --dry-run ^
+                    --test-level RunLocalTests ^
+                    --wait 20
 
-                echo Validation Completed
-                """
+                    echo Validation Completed
+                    """
+                }
             }
         }
 
-        stage('Deploy to Org') {
+        stage('Deploy to Org (With Tests)') {
             steps {
                 bat """
-                echo Deploying Metadata to Salesforce...
+                echo Deploying Metadata with Tests...
 
                 "%SF_CLI%" project deploy start ^
                 --target-org projectdemosfdc ^
-                --wait 20
+                --test-level RunLocalTests ^
+                --wait 30
 
                 echo Deployment Completed
                 """
             }
         }
 
-        stage('Run Apex Tests') {
+        stage('Run Apex Tests (JUnit Report)') {
             steps {
                 bat """
-                echo Running Apex Tests...
+                echo Running Apex Tests for Reporting...
 
                 "%SF_CLI%" apex run test ^
                 --target-org projectdemosfdc ^
@@ -91,7 +94,7 @@ pipeline {
             echo '✅ Salesforce deployment and tests completed successfully'
         }
         failure {
-            echo '❌ Pipeline failed. Check logs above for details.'
+            echo '❌ Pipeline failed. Likely due to test coverage < 75% or deployment errors.'
         }
     }
 }
